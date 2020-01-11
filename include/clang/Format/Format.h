@@ -1298,6 +1298,12 @@ struct FormatStyle {
   /// \endcode
   bool IndentWrappedFunctionNames;
 
+  /// \brief If true, indent nested blocks to the start of the nested function call
+  bool IndentNestedBlocks;
+
+  /// \brief If true, allow newlines before block parameters when ColumnLimit is 0.
+  bool AllowNewlineBeforeBlockParameter;
+
   /// A vector of prefixes ordered by the desired groups for Java imports.
   ///
   /// Each group is separated by a newline. Static imports will also follow the
@@ -1958,6 +1964,8 @@ struct FormatStyle {
            IndentPPDirectives == R.IndentPPDirectives &&
            IndentWidth == R.IndentWidth && Language == R.Language &&
            IndentWrappedFunctionNames == R.IndentWrappedFunctionNames &&
+           IndentNestedBlocks == R.IndentNestedBlocks &&
+           AllowNewlineBeforeBlockParameter == R.AllowNewlineBeforeBlockParameter &&
            JavaImportGroups == R.JavaImportGroups &&
            JavaScriptQuotes == R.JavaScriptQuotes &&
            JavaScriptWrapImports == R.JavaScriptWrapImports &&

@@ -383,7 +383,7 @@ bool ContinuationIndenter::mustBreak(const LineState &State) {
     return true;
   if (Current.is(TT_SelectorName) && !Previous.is(tok::at) &&
       State.Stack.back().ObjCSelectorNameFound &&
-      State.Stack.back().BreakBeforeParameter)
+      State.Stack.back().BreakBeforeParameter && Style.IndentNestedBlocks)
     return true;
 
   unsigned NewLineColumn = getNewLineColumn(State);
@@ -457,6 +457,11 @@ bool ContinuationIndenter::mustBreak(const LineState &State) {
   if (Current.is(tok::lessless) && Current.isNot(TT_OverloadedOperator) &&
       State.Stack.back().BreakBeforeParameter &&
       State.Stack.back().FirstLessLess == 0)
+    return true;
+
+  if (Current.is(TT_SelectorName) && !Previous.is(tok::at) &&
+      State.Stack.back().ObjCSelectorNameFound &&
+      State.Stack.back().BreakBeforeParameter && !Style.IndentNestedBlocks)
     return true;
 
   if (Current.NestingLevel == 0 && !Current.isTrailingComment()) {
@@ -1308,8 +1313,13 @@ void ContinuationIndenter::moveStatePastScopeOpener(LineState &State,
   unsigned LastSpace = State.Stack.back().LastSpace;
   bool AvoidBinPacking;
   bool BreakBeforeParameter = false;
-  unsigned NestedBlockIndent = std::max(State.Stack.back().StartOfFunctionCall,
-                                        State.Stack.back().NestedBlockIndent);
+  unsigned NestedBlockIndent;
+  if (Style.IndentNestedBlocks) {
+    NestedBlockIndent = std::max(State.Stack.back().StartOfFunctionCall,
+                                 State.Stack.back().NestedBlockIndent);
+  } else {
+    NestedBlockIndent = State.Stack.back().NestedBlockIndent;
+  }
   if (Current.isOneOf(tok::l_brace, TT_ArrayInitializerLSquare) ||
       opensProtoMessageField(Current, Style)) {
     if (Current.opensBlockOrBlockTypeList(Style)) {
@@ -1378,7 +1388,7 @@ void ContinuationIndenter::moveStatePastScopeOpener(LineState &State,
         if (getLengthToMatchingParen(Current, State.Stack) + State.Column >
             getColumnLimit(State))
           BreakBeforeParameter = true;
-      } else {
+      } else if (Style.AllowNewlineBeforeBlockParameter) {
         // For ColumnLimit = 0, we have to figure out whether there is or has to
         // be a line break within this call.
         for (const FormatToken *Tok = &Current;
